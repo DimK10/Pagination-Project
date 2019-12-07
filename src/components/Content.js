@@ -3,14 +3,13 @@ import Card from './Card';
 import Pagination from './Pagination'
 import mockData from '../mock';
 
-const Content = () => {
+const Content = (props) => {
 
     const [values, setValues] = useState({
         currentPage: 1,
         start: 0,
         finish: 5,
-        itemsDisplayed: 6,
-        numOfPages: 1, // pages are the total number of pages required
+        itemsDisplayed: props.itemsDisplayed,
         remainingItems: 0
     });
 
@@ -19,47 +18,46 @@ const Content = () => {
         setValues({ ...values, currentPage: newPage });
     };
 
-    const [props, setProps] = useState({
+    const [propsForChild, setPropsForChild] = useState({
         changeCurrentPage, 
-        numOfPages: values.numOfPages
+        numOfPages: 1 // pages are the total number of pages required
     });
 
 
     const computeTotalNumOfPages = () => {
         
-        let numOfPages = Math.floor(mockData.length / values.itemsDisplayed);
-        let remainingItems = mockData.length % values.itemsDisplayed;
+        let numOfPages = Math.floor(mockData.length / props.itemsDisplayed);
+        let remainingItems = mockData.length % props.itemsDisplayed;
 
         if(remainingItems !== 0) {
             numOfPages += 1;
         };
-        // console.log('mockData.length: ', mockData.length);
-        
-        // console.log('numOfPages: ', numOfPages);
-        // console.log('remainingItems: ', remainingItems);
-        
-        
 
-        setValues({ ...values, numOfPages, remainingItems });
-        setProps({ ...props, numOfPages });
+        setValues({ ...values, remainingItems });
+        setPropsForChild({ ...propsForChild, numOfPages });
     };
+
+    useEffect(() => {
+        setValues({...values, itemsDisplayed: props.itemsDisplayed});
+    }, [props.itemsDisplayed]);
+
+
 
     useEffect(() => {
         computeTotalNumOfPages();
     }, []);
 
     useEffect(() => {
-        calculateRangeOfItems();
-    }, [values.currentPage]);
+        computeTotalNumOfPages();
+    }, [values.itemsDisplayed]);
 
     useEffect(() => {
-        console.log(values);
-        
-    }, [values.numOfPages]);
+        calculateRangeOfItems();
+    }, [values.currentPage, values.itemsDisplayed]);
 
     const calculateRangeOfItems = () => {
-        const finish = (values.currentPage * values.itemsDisplayed) - 1;
-        const start = finish - (values.itemsDisplayed - 1);
+        const finish = (values.currentPage * props.itemsDisplayed) - 1;
+        const start = finish - (props.itemsDisplayed - 1);
 
         setValues({ ...values, start, finish });
     };
@@ -67,15 +65,13 @@ const Content = () => {
     const showItems = (start, finish) => {
 
         let itemsToShow = mockData.filter((item, index) => {
-            if(index >= values.start && index <= finish) {
+            if(index >= start && index <= finish) {
                 return item;
             };
         });
 
         return itemsToShow;
     };
-
-    
 
     return (
         <div>
@@ -85,11 +81,10 @@ const Content = () => {
                         <Card item={item} />
                     </div> 
                 ))}
-                
-                
-            </div> 
+            </div>
+            <div className="row"></div>
             <hr style={{ width: '50%' }}/> 
-            <Pagination {...props}/>
+            <Pagination {...propsForChild}/>
         </div>
     );
 };
